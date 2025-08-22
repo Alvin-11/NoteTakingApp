@@ -1,0 +1,71 @@
+﻿@page "/logoff"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+@inject NavigationManager _navigationManager
+
+<PageTitle>LogOff</PageTitle>
+
+@if (userAuthenticated) {
+    <div style=" display: flex;
+    justify-content: center;
+    align-items: center;
+    height:100vh; 
+    border: 1px solid white;">
+    <button class="btn btn-primary" style="align-content:center;vertical-align:center;align-self:center;" @onclick="LogOff1">LogOff</button>
+    <br />
+    </div>
+    
+}
+else
+{
+    NavigationManager.NavigateTo("/login");
+}
+
+
+@code {
+
+
+    private bool userAuthenticated = true;
+    private string answer = "";
+    private string answer1 = "";
+    private string answer3 = "";
+    private async Task LogOff1()
+    {
+        answer3 = "logoff";
+        var request = new HttpRequestMessage(HttpMethod.Get,
+                          "https://localhost:5001/api/Products/logoff");
+
+            var response = await Http.SendAsync(request);
+            answer1 = await response.Content.ReadAsStringAsync();
+            userAuthenticated = !Convert.ToBoolean(answer);
+            _navigationManager.NavigateTo("login", true);
+        if (answer1 == "true")
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Log off Successfully!");
+        }
+        else { await JsRuntime.InvokeVoidAsync("alert", "Log Off Failed!"); }
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get,
+                      "https://localhost:5001/api/Products/login");
+
+
+            var response = await Http.SendAsync(request);
+            answer = await response.Content.ReadAsStringAsync();
+            userAuthenticated = Convert.ToBoolean(answer);
+     }
+    catch (HttpRequestException ex)
+       {
+        Console.WriteLine($"Request error: {ex.Message}");
+       }
+    }
+
+
+}

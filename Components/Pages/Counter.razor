@@ -1,0 +1,203 @@
+﻿@page "/counter"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject HttpClient Client
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Text.Json;
+@using System.Text;
+@using System.Windows;
+@using Microsoft.AspNetCore.Http;
+@inject IJSRuntime JsRuntime
+
+<PageTitle>Counter</PageTitle>
+<style>
+    .list-group-item:hover {
+    background-color: green;
+    color: white;
+    }
+
+    .list-group-item:active {
+    background-color: darkgreen;
+    color: white;
+    }</style>
+@if (userAuthenticated)
+{
+
+    <h1 style="text-align:center;">Notes</h1>
+    <div style="overflow:auto;width:100%;height:100%;display: flex;">
+        <div style="overflow:auto;width:25%;height:75vh;margin-bottom:10vh; margin-right:10vh; ">
+            <ul class="list-group">
+                <li class="list-group-item">Table of Titles</li>
+                @if(AllTitles != null){
+                @foreach (var title in AllTitles)
+                {
+                  <li class="list-group-item" @onclick='() => Show($"{title}")'>@title</li>
+                }}
+            </ul>
+        </div>
+        <div style="overflow:auto;width:65%;height:100vh;">
+
+            <div class="mb-3">
+                <label for="titleNote" class="form-label">Title</label>
+                <input type="text" class="form-control" @bind="title" id="titleNote" placeholder="Title">
+            </div>
+            <div class="mb-3">
+                <label for="NewNoteText" class="form-label">Notes Section</label>
+                <textarea class="form-control" @bind="note" id="NewNoteText" rows="6" style="height:60vh;"></textarea>
+            </div>
+            <div class="col-12" style="display: flex;justify-content: center;align-items: center;">
+                <button class="btn btn-primary" style="margin-right:5vh;" type="submit" @onclick="CreateNewNote">Save</button>
+                <button class="btn btn-primary" type="submit" @onclick="DeleteNote">Delete</button>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    NavigationManager.NavigateTo("/login");
+}
+
+@code {
+
+    private int currentCount = 0;
+    private bool userAuthenticated = true;
+    private string answer = "some";
+    private string _id = "d";
+    private string title = "";
+    private string note = "";
+    private string oldNote = "";
+    public string Id
+    {
+        get => _id;
+        set => _id = value;
+    }
+    private List<string> AllTitles = new List<string>();
+
+    private async Task Show(string Text)
+    {
+        oldNote = Text;
+        title = $"{Text}";
+
+        var userData = new
+        {
+            Title = Text
+        };
+
+        string json = JsonSerializer.Serialize(userData);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await Http.PostAsync("https://localhost:5001/api/Products/GetNote", content);
+        note = await response.Content.ReadAsStringAsync();
+    }
+
+    private async Task CreateNewNote()
+    {
+
+
+        var userData = new
+        {
+            OldTitle = oldNote,
+            Title = title,
+            Note = note
+        };
+
+        string json = JsonSerializer.Serialize(userData);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await Http.PostAsync("https://localhost:5001/api/Products/SaveNote", content);
+        var some = await response.Content.ReadAsStringAsync();
+        if (response.IsSuccessStatusCode)
+        {
+            await FetchTitles();
+        }
+
+        if (some == "true")
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Note Saved Successfully!");
+        }
+        else { await JsRuntime.InvokeVoidAsync("alert", "Note Saved Failed!"); }
+    }
+
+    private async Task DeleteNote()
+    {
+        var userData = new
+        {
+            Title = title
+        };
+
+        string json = JsonSerializer.Serialize(userData);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await Http.PostAsync("https://localhost:5001/api/Products/DeleteNote", content);
+        var some = await response.Content.ReadAsStringAsync();
+        if (response.IsSuccessStatusCode)
+        {
+            title = "";
+            note = "";
+            await FetchTitles();
+        }
+        if (some == "true")
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Note Deleted Successfully!");
+        }
+        else { await JsRuntime.InvokeVoidAsync("alert", "Note Deleted Failed!"); }
+    }
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get,"https://localhost:5001/api/Products/login");
+            var response = await Http.SendAsync(request);
+            answer = await response.Content.ReadAsStringAsync();
+            userAuthenticated = Convert.ToBoolean(answer);
+            if (userAuthenticated)
+            {
+                await FetchTitles();
+            }
+
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Request error: {ex.Message}");
+        }
+    }
+
+    private async Task FetchTitles()
+    {
+        try
+        {
+            var request1 = new HttpRequestMessage(HttpMethod.Get,
+                                  "https://localhost:5001/api/Products/GetAllTitles");
+            var response1 = await Http.SendAsync(request1);
+            if (response1.IsSuccessStatusCode)
+            {
+                AllTitles = await response1.Content.ReadFromJsonAsync<List<string>>();
+            }
+
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Request error: {ex.Message}");
+        }
+    }
+
+    private async void answers()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+           "https://localhost:5001/api/Products");
+
+
+        var response = await Http.SendAsync(request);
+        answer = await response.Content.ReadAsStringAsync();
+    }
+
+    
+}

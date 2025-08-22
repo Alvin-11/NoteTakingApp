@@ -1,0 +1,163 @@
+﻿@page "/signup"
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject HttpClient Client
+@using System.Text.Json;
+@inject IJSRuntime JsRuntime
+@using System.Text;
+<PageTitle>SignUp</PageTitle>
+
+<h1 style="text-align: center;">SignUp</h1>
+
+    <EditForm Model="@model" OnSubmit="Submit" FormName="SignUp">
+        <div class="login-container" >
+            <div>
+                <label for="name">
+                    &nbsp  Name: &nbsp
+                </label>
+                &nbsp <InputText id="username" @bind-Value="model.name" class="input-field" />
+
+            </div>
+            <br />
+            <div>
+                <label for="username">
+                    &nbsp  Username: &nbsp
+                </label>
+                &nbsp <InputText id="username" @bind-Value="model.username" class="input-field"/>
+
+            </div>
+            <br/>
+            <div>
+                <label for="password">
+                    &nbsp  Password: &nbsp
+                </label>
+                &nbsp <InputText id="password" @bind-Value="model.password" class="input-field" />
+
+            </div>
+            <br/>
+            <div>
+                <button type="submit" class="login-button" style="color:black;"> Submit</button>
+            </div>
+        </div>
+    </EditForm>
+<style>
+    .login-container {
+    color:black;
+    max-width: 400px;
+    margin: 100px auto;
+    margin-top: 12vh;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: lightblue;
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+    }
+
+    .login-container h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    }
+
+    .login-container:hover {
+    transition: box-shadow 0.3s ease; 
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.50);
+    ;
+    }
+
+
+    .input-field {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border 0.2s;
+    }
+
+    .input-field:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+
+    .login-button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    background-color: lightgreen;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    }
+
+    .login-button:hover {
+    background-color: #0056b3;
+    }
+</style>
+
+@code {
+
+    private string username;
+    private string password;
+    private string answer;
+    private string _id;
+    private bool userAuthenticated = false;
+
+
+    public string Id
+    {
+        get => _id;
+        set => _id = value;
+    }
+    formData model = new formData();
+
+    private async void Submit()
+    {
+        username = model.username;
+        password = model.password;
+        string name = model.name;
+        model = new formData();
+        var userData = new
+        {
+            Username = username,
+            Password = password,
+            Name = name
+        };
+
+        // 2. Convert the object to JSON
+        string json = JsonSerializer.Serialize(userData);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+       // var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:5001/api/Products/SignUp") { Content = content };
+        
+        var response = await Http.PostAsync("https://localhost:5001/api/Products/SignUp", content);
+
+       // string responseString = await response.Content.ReadAsStringAsync();
+
+        //var response = await Http.SendAsync(request);
+        answer = await response.Content.ReadAsStringAsync();
+        //Console.WriteLine("answer: " + answer);
+         userAuthenticated =  Convert.ToBoolean(answer);
+
+        if (answer == "true")
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Sign Up Successfully!");
+        }
+        else { await JsRuntime.InvokeVoidAsync("alert", "Sign Up Failed!"); }
+    }
+
+    public class formData
+    {
+        public string username;
+        public string password;
+        public string name;
+    }
+
+    
+}

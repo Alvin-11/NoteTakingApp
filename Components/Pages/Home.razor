@@ -1,0 +1,92 @@
+﻿@page "/"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using System.Text.Json;
+@using System.Text;
+@using System.Windows;
+@using Microsoft.AspNetCore.Http;
+@rendermode InteractiveServer
+@inject IJSRuntime JsRuntime
+
+<PageTitle>Home</PageTitle>
+
+@if (userAuthenticated) {
+
+    <h1 style="text-align:center;">Create a new Note Page</h1>
+    <div class="mb-3">
+        <label for="titleNote" class="form-label">Title</label>
+        <input type="text" class="form-control" @bind="title" id="titleNote" placeholder="Title">
+    </div>
+    <div class="mb-3">
+        <label for="NewNoteText" class="form-label">Notes Section</label>
+        <textarea class="form-control" @bind="note" id="NewNoteText" rows="6" style="height:60vh;"></textarea>
+    </div>
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit" @onclick="CreateNewNote">Create Note</button>
+    </div>
+}
+else
+{
+    NavigationManager.NavigateTo("/login");
+}
+
+
+@code {
+    private string title="";
+    private string note="";
+    private bool userAuthenticated = true;
+    private string answer = "";
+    private bool NoteCreated = false;
+    private bool show = false;
+    private async Task InverseString()
+    {
+        NoteCreated = false;
+        await Task.Delay(2000);
+        show = false;
+    }
+    private async Task CreateNewNote()
+    {
+        var userData = new
+        {
+            Title = title,
+            Note = note
+        };
+
+        string json = JsonSerializer.Serialize(userData);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await Http.PostAsync("https://localhost:5001/api/Products/createNote", content);
+        answer = await response.Content.ReadAsStringAsync();
+        if (answer.Contains("true"))
+        {
+            NoteCreated = true;
+            show = true;
+        }
+        if (answer == "true")
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Note Created Successfully!");
+        }
+        else { await JsRuntime.InvokeVoidAsync("alert", "Note Created Failed!"); }
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get,
+                      "https://localhost:5001/api/Products/login");
+
+
+            var response = await Http.SendAsync(request);
+            answer = await response.Content.ReadAsStringAsync();
+            userAuthenticated = Convert.ToBoolean(answer);
+     }
+    catch (HttpRequestException ex)
+       {
+        Console.WriteLine($"Request error: {ex.Message}");
+       }
+    }
+
+
+}

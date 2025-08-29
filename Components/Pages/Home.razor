@@ -55,7 +55,7 @@ else
         string json = JsonSerializer.Serialize(userData);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await Http.PostAsync("https://localhost:5001/api/Products/createNote", content);
+        var response = await Http.PostAsync("http://localhost:5085/api/Products/createNote", content);
         answer = await response.Content.ReadAsStringAsync();
         if (answer.Contains("true"))
         {
@@ -75,7 +75,7 @@ else
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Get,
-                      "https://localhost:5001/api/Products/login");
+                      "http://localhost:5085/api/Products/login");
 
 
             var response = await Http.SendAsync(request);

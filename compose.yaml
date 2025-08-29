@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  blazorapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blazorapi
+    ports:
+      - "5085:5085"       # HTTP
+    volumes:
+      - ./users.db:/app/users.db
+      - ./notes.db:/app/notes.db
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5085;

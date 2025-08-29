@@ -64,7 +64,7 @@
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Get,
-                      "https://localhost:5001/api/Products/username");
+                      "http://localhost:5085/api/Products/username");
 
 
             var response = await Http.SendAsync(request);

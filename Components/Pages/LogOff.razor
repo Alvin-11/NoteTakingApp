@@ -35,7 +35,7 @@ else
     {
         answer3 = "logoff";
         var request = new HttpRequestMessage(HttpMethod.Get,
-                          "https://localhost:5001/api/Products/logoff");
+                          "http://localhost:5085/api/Products/logoff");
 
             var response = await Http.SendAsync(request);
             answer1 = await response.Content.ReadAsStringAsync();
@@ -54,7 +54,7 @@ else
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Get,
-                      "https://localhost:5001/api/Products/login");
+                      "http://localhost:5085/api/Products/login");
 
 
             var response = await Http.SendAsync(request);
